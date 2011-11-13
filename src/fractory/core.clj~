@@ -1,0 +1,134 @@
+(ns core)
+
+(defn drawfractal ([boundsx boundsy scalefactor complex threshold]
+
+  (let [frm (javax.swing.JFrame.)
+        pan (.getContentPane frm)
+        ;GRAPHICS ABOVE
+        scal scalefactor
+        ;How large is the graphic
+        lowx (first boundsx)
+        highx (second boundsx)
+
+        lowy (first boundsy)
+        highy (second boundsy)
+          ]
+   
+    (doto frm (.setSize (java.awt.Dimension. scal scal)) (.show))
+      (let [grp (.getGraphics pan)]
+        (doseq [xs (range 0 scal) ys (range 0 scal)]
+          (let [newcolor (mandelgetcolor
+                         (+ lowx (scaleit scal xs (- highx lowx)))
+                         (+ lowy (scaleit scal ys (- highy lowy)))
+                         complex 0)]
+            (.setColor grp (java.awt.Color.
+                                          newcolor 0 (int (* 0.2 newcolor)))
+                                     )
+            (try (.drawLine grp xs ys xs ys)))))))
+  ([boundsx boundsy scalefactor threshold]
+      (let [frm (javax.swing.JFrame.)
+            pan (.getContentPane frm)                                        ;GRAPHICS ABOVE
+            scal scalefactor                                        ;How large is the graphic
+            lowx (first boundsx)
+            highx (second boundsx)
+            lowy (first boundsy)
+            highy (second boundsy)
+            ]
+   
+        (doto frm (.setSize (java.awt.Dimension. scal scal)) (.show))
+        (let [grp (.getGraphics pan)]
+          (doseq [xs (range 0 scal) ys (range 0 scal)]
+            (let [realscale (+ lowx (scalepit scal xs (- highx lowx)))
+                  imagscale (+ lowy (scaleit scal ys (- highy lowy)))
+                  newcolor (mandelgetcolor
+                            realscale
+                            imagscale
+                            (list realscale imagscale) 0)]
+              (.setColor grp (java.awt.Color.
+                              newcolor 0 (int (* 0.2 newcolor)))
+                         )
+               
+              (try (.drawLine grp xs ys xs ys)))))))
+  )
+
+
+
+
+
+
+
+
+
+(defn scaleit [scale num newscale]
+  (double  (* newscale (/ num scale))))
+
+
+(defn isq [complex]
+  (let [real (first complex)
+        imag (second complex)]
+    (list (- (* real real) (* imag imag))
+         (* 2 real imag))
+    )
+  )
+
+(isq (2 -2))
+
+(defn mandelgetcolor [real imag c count threshold]
+  (cond (= count 254) count
+        (> (+ (* real real) (* imag imag)) 4)   (min 254 (* threshold count))
+        :else (let [sq (isq (list real imag))
+                    rc (first c)
+                    ic (second c)
+                    r (+ rc (first sq))
+                    im (+ ic (second sq))]
+                (recur r im c (+ 1 count))
+                )
+   )
+  )
+
+
+;(mandelgetcolor -0.7 0.3 '(-1.6 0.3) 0)
+(drawfractal  '(-2 2) '(-1.5 2.5) 1000 '(0.5 -0.5))
+(drawfractal  '(-2.1 1.5) '(-1.7 1.7) 900)
+(drawfractal (zoom 450 '(-0.055 0.055)) (zoom 450 '(0.72992 0.84245)) 300 '(-1 0))
+                                    ;seahorsevalley
+(drawfractal '(-0.9 -0.6) '(0.1 0.3) 800)
+
+
+(defn zoom ( [zx zy xbounds ybounds]
+               (let [lowx (first xbounds)
+                     highx (second xbounds)
+                     diffx (- highx lowx)
+                     center (/ (+ lowx highx) 2)
+                     newhighx (float (+ center (/ diffx (* 2 zx))))
+                     newlowx (float (- center (/ diffx (* 2 zx))))
+                     lowy (first ybounds)
+                     highy (second ybounds)
+                     diffy (- highy lowy)
+                     center (/ (+ lowy highy) 2)
+                     newhighy (float (+ center (/ diffy (* 2 zy))))
+                     newlowy (float (- center (/ diffy (* 2 zy))))
+                     ]
+                 (list (list newlowx newhighx) (list newlowy newhighy))
+                 ))
+  ([zx xbounds]
+     (let [lowx (first xbounds)                                                        
+           highx (second xbounds)                                                      
+           diffx (- highx lowx)                                                        
+           center (/ (+ lowx highx) 2)                                                 
+           newhighx (float (+ center (/ diffx (* 2 zx))))                           
+           newlowx (float (- center (/ diffx (* 2 zx))))  ]
+       (list newlowx newhighx)
+     )))
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,13 @@
+# fractory
+
+FIXME: Fractory is what it sounds like. It is a quick and easy factory for super cool fractal images. Check out seahorse valley online, then generate it yourself and have your mind blown.
+
+## Usage
+
+FIXME: I'll get to this part. I haven't written the nice macros (mactrals) yet, so calling the proper functions is clumsy.
+
+## License
+
+Copyright (C) 2011 Keith Wyss
+
+Distributed under the Eclipse Public License, the same as Clojure.
