@@ -52,10 +52,21 @@
    )
   )
 
-(defn scaleandcolor [lowx lowy scal xypair highx highy complex threshold]
+(defn scaleandcolorj [lowx lowy scal xypair highx highy complex threshold]
   (let [newcolor (mandelgetcolor (+ lowx (scaleit scal (first  xypair) (- highx lowx)))
                                  (+ lowy (scaleit scal (second  xypair) (- highy lowy)))
                                  complex 0 threshold)]
+    (list xypair (take 3 (repeat newcolor))) ; 3 means rgb
+    )
+  )
+
+(defn scaleandcolor [lowx lowy scal xypair highx highy threshold]
+  (let [scalex (+ lowx (scaleit scal (first xypair) (- highx lowx)))
+        scaley (+ lowy (scaleit scal (second  xypair) (- highy lowy)))
+        newcolor (mandelgetcolor scalex
+                                 scaley
+                                 (list scalex scaley)
+                                 0 threshold)]
     (list xypair (take 3 (repeat newcolor))) ; 3 means rgb
     )
   )
@@ -75,9 +86,8 @@
         highy (second boundsy)
           ]
       (doto frm (.setSize (java.awt.Dimension. scal scal)) (.show))
-      
-      (let [xypair (for [xs (range 0 scal) ys (range 0 scal)] (list xs ys))
-            coorcolors (map scaleandcolor (repeat lowx) (repeat lowy) (repeat scal) xypair
+            (let [xypair (for [xs (range 0 scal) ys (range 0 scal)] (list xs ys))
+            coorcolors (map scaleandcolorj (repeat lowx) (repeat lowy) (repeat scal) xypair
                                     (repeat highx) (repeat highy) (repeat complex) (repeat threshold))
             grp (.getGraphics pan)
             ] 
@@ -89,6 +99,7 @@
                       (.setColor grp (java.awt.Color. 0 (int (* 0.3 green)) blue))
                       (try (.drawLine grp xcoor ycoor xcoor ycoor))
                       )))
+
       ))
   ([boundsx boundsy scalefactor threshold]
       (let [frm (javax.swing.JFrame.)
@@ -101,6 +112,7 @@
             ]
    
         (doto frm (.setSize (java.awt.Dimension. scal scal)) (.show))
+
         (let [grp (.getGraphics pan)]
           (doseq [xs (range 0 scal) ys (range 0 scal)]
             (let [realscale (+ lowx (scaleit scal xs (- highx lowx)))
@@ -113,7 +125,25 @@
                               0 (int (* 0.3 newcolor)) newcolor)
                          )
                
-              (try (.drawLine grp xs ys xs ys)))))))
+              (try (.drawLine grp xs ys xs ys)))))
+
+
+
+
+#_      (let [xypair (for [xs (range 0 scal) ys (range 0 scal)] (list xs ys))
+            coorcolors (map scaleandcolor (repeat lowx) (repeat lowy) (repeat scal) xypair
+                                    (repeat highx) (repeat highy) (repeat threshold))
+            grp (.getGraphics pan)
+            ] 
+      
+       (doseq [pixels coorcolors]
+         (let [xcoor (first (first pixels)) ycoor (second (first pixels))
+               red (first (second pixels)) green (second (second pixels))
+               blue (nth (second pixels) 2)]
+                      (.setColor grp (java.awt.Color. 0 (int (* 0.3 green)) blue))
+                      (try (.drawLine grp xcoor ycoor xcoor ycoor))
+                      ))))
+      )
   )
 
 
@@ -143,7 +173,7 @@
 (time (drawfractal  '(-2.5 2.5) '(-2.5 2.5) 1000 '(3 -3) 20))
 
 
-(drawfractal  '(-2.1 1.5) '(-1.7 1.7) 900 1)
+(time (drawfractal  '(-2.1 1.5) '(-1.7 1.7) 900 1))
 (time (drawfractal (zoom 450 '(-0.055 0.055)) (zoom 450 '(0.72992 0.84245)) 300 '(-1 0) 1))
                                     ;seahorsevalley
 (time (drawfractal '(-0.9 -0.6) '(0.1 0.3) 800 1))
