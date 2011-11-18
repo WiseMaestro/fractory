@@ -37,20 +37,20 @@
 (defn scaleit [scale num newscale]
   (double  (* newscale (/ num scale))))
 
-
 (defn mandelgetcolor [real imag c count threshold]
-  (cond (= count 254) count
-        (> (+ (* real real) (* imag imag)) 4)
-                (min 254 (* threshold count)) ;return number of iterations til escape
-        :else (let [sq (isq (list real imag))
-                    rc (first c)
-                    ic (second c)
-                    r (+ rc (first sq))
-                    im (+ ic (second sq))]
-                (recur r im c (+ 1 count) threshold)
-                )
-   )
-  )
+  (let [ adjustcount (* threshold count)] (cond (>= adjustcount 254) 254
+                                                (> (+ (* real real) (* imag imag)) 4)
+                                                (min 254 adjustcount)
+                                        ;return number of iterations til escape
+                                                :else (let [sq (isq (list real imag))
+                                                            rc (first c)
+                                                            ic (second c)
+                                                            r (+ rc (first sq))
+                                                            im (+ ic (second sq))]
+                                                        (recur r im c (+ 1 count) threshold)
+                                                        )
+                                                ))
+  ) 
 
 (defn scaleandcolorj [lowx lowy scal xypair highx highy complex threshold]
   (let [newcolor (mandelgetcolor (+ lowx (scaleit scal (first  xypair) (- highx lowx)))
@@ -62,45 +62,66 @@
 
 (defn scaleandcolor [lowx lowy scal xypair highx highy threshold]
   (let [scalex (+ lowx (scaleit scal (first xypair) (- highx lowx)))
-        scaley (+ lowy (scaleit scal (second  xypair) (- highy lowy)))
-        newcolor (mandelgetcolor scalex
-                                 scaley
-                                 (list scalex scaley)
-                                 0 threshold)]
-    (list xypair (take 3 (repeat newcolor))) ; 3 means rgb
-    )
-  )
-
-
-(defn drawfractal ([boundsx boundsy scalefactor complex threshold]
-
-  (let [frm (javax.swing.JFrame.)
-        pan (.getContentPane frm)
-        ;GRAPHICS ABOVE
-        scal scalefactor
-        ;How large is the graphic
-        lowx (first boundsx)
-        highx (second boundsx)
-
-        lowy (first boundsy)
-        highy (second boundsy)
+        scaley (+ lowy (scaleit scal (second  xypair) (- highy lowy))) 
           ]
-      (doto frm (.setSize (java.awt.Dimension. scal scal)) (.show))
-            (let [xypair (for [xs (range 0 scal) ys (range 0 scal)] (list xs ys))
-            coorcolors (map scaleandcolorj (repeat lowx) (repeat lowy) (repeat scal) xypair
-                                    (repeat highx) (repeat highy) (repeat complex) (repeat threshold))
+  (let [newcolor (mandelgetcolor scalex
+                                 scaley
+                                 (list scalex scaley) 0 threshold)]
+    (list xypair (take 3 (repeat newcolor))) ; 3 means rgb
+    )))
+
+
+
+(defn drawfractal 
+    ([boundsx boundsy scalefactor complex threshold]
+      (let [frm (javax.swing.JFrame.)
+            pan (.getContentPane frm)                                        ;GRAPHICS ABOVE
+            scal scalefactor                                        ;How large is the graphic
+            lowx (first boundsx)
+            highx (second boundsx)
+            lowy (first boundsy)
+            highy (second boundsy)
+            ]
+
+
+    (doto frm (.setSize (java.awt.Dimension. scal scal)) (.show))
+    (let [xypair (for [xs (range 0 scal) ys (range 0 scal)] (list xs ys))
+       noproc (.. Runtime getRuntime availableProcessors)
+            xysets (partition-all (int (+ 1 (/  (* scal scal)
+                                                noproc)))
+                                  
+                                  xypair)               
+       coorcolors  (pmap
+                    #(doall  (map scaleandcolorj (repeat lowx) (repeat lowy) (repeat scal) %1
+                                  (repeat highx) (repeat highy) (repeat complex) (repeat threshold)))
+                           xysets)
+
+;                  xysets (partition-all (int (+ 1 (/  (* scal scal) 4))) xypair)               
+;                  coorcolors (pmap scaleandcolorj (repeat lowx) (repeat lowy) (repeat scal) xypair
+ ;                  (repeat highx) (repeat highy) (repeat complex) (repeat threshold))
             grp (.getGraphics pan)
             ] 
       
-       (doseq [pixels coorcolors]
+#_       (doseq [pixels coorcolors]
          (let [xcoor (first (first pixels)) ycoor (second (first pixels))
                red (first (second pixels)) green (second (second pixels))
                blue (nth (second pixels) 2)]
                       (.setColor grp (java.awt.Color. 0 (int (* 0.3 green)) blue))
                       (try (.drawLine grp xcoor ycoor xcoor ycoor))
-                      )))
+                      ))
+       (doseq [pixelnest coorcolors]
+         (doseq [pixels pixelnest] (let [xcoor (first (first pixels)) ycoor (second (first pixels))
+               red (first (second pixels)) green (second (second pixels))
+               blue (nth (second pixels) 2)]
+                      (.setColor grp (java.awt.Color. 0 (int (* 0.3 green)) blue))
+                      (try (.drawLine grp xcoor ycoor xcoor ycoor))
+                      ))
+        )
 
-      ))
+
+
+
+)))
   ([boundsx boundsy scalefactor threshold]
       (let [frm (javax.swing.JFrame.)
             pan (.getContentPane frm)                                        ;GRAPHICS ABOVE
@@ -113,7 +134,7 @@
    
         (doto frm (.setSize (java.awt.Dimension. scal scal)) (.show))
 
-        (let [grp (.getGraphics pan)]
+#_        (let [grp (.getGraphics pan)]
           (doseq [xs (range 0 scal) ys (range 0 scal)]
             (let [realscale (+ lowx (scaleit scal xs (- highx lowx)))
                   imagscale (+ lowy (scaleit scal ys (- highy lowy)))
@@ -127,41 +148,30 @@
                
               (try (.drawLine grp xs ys xs ys)))))
 
-
-
-
-#_      (let [xypair (for [xs (range 0 scal) ys (range 0 scal)] (list xs ys))
-            coorcolors (map scaleandcolor (repeat lowx) (repeat lowy) (repeat scal) xypair
-                                    (repeat highx) (repeat highy) (repeat threshold))
-            grp (.getGraphics pan)
-            ] 
+ (let [xypair (for [xs (range 0 scal) ys (range 0 scal)] (list xs ys))
+      noproc (.. Runtime getRuntime availableProcessors)
+            xysets (partition-all (int (+ 1 (/  (* scal scal)
+                                                noproc)))
+                                  
+                                  xypair)               
+       coorcolors  (pmap
+                    #(doall  (map scaleandcolor (repeat lowx) (repeat lowy) (repeat scal) %1
+                                  (repeat highx) (repeat highy) (repeat threshold)))
+                           xysets)
+            
+            grp (.getGraphics pan)]
+        
       
-       (doseq [pixels coorcolors]
-         (let [xcoor (first (first pixels)) ycoor (second (first pixels))
+       (doseq [pixelnest coorcolors]
+         (doseq [pixels pixelnest] (let [xcoor (first (first pixels)) ycoor (second (first pixels))
                red (first (second pixels)) green (second (second pixels))
                blue (nth (second pixels) 2)]
                       (.setColor grp (java.awt.Color. 0 (int (* 0.3 green)) blue))
                       (try (.drawLine grp xcoor ycoor xcoor ycoor))
-                      ))))
+                      ))
+        )))
       )
   )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(isq (2 -2))
-
-
 
 
 ;(mandelgetcolor -0.7 0.3 '(-1.6 0.3) 0)
@@ -173,10 +183,10 @@
 (time (drawfractal  '(-2.5 2.5) '(-2.5 2.5) 1000 '(3 -3) 20))
 
 
-(time (drawfractal  '(-2.1 1.5) '(-1.7 1.7) 900 1))
+(time (drawfractal  '(-2.1 1.5) '(-1.7 1.7) 400 1))
 (time (drawfractal (zoom 450 '(-0.055 0.055)) (zoom 450 '(0.72992 0.84245)) 300 '(-1 0) 1))
                                     ;seahorsevalley
-(time (drawfractal '(-0.9 -0.6) '(0.1 0.3) 800 1))
+(time (drawfractal '(-0.9 -0.6) '(0.1 0.3) 1000 1))
 
 
 
