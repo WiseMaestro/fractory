@@ -1,4 +1,7 @@
-(ns core)
+(ns fractory.core)
+
+
+(require 'fractory.colormaps)
 
 (defn isq [complex]
   (let [real (first complex)
@@ -7,6 +10,8 @@
          (* 2 real imag))
     )
   )
+
+
 
 (defn zoom ( [zx zy xbounds ybounds]
                (let [lowx (first xbounds)
@@ -38,9 +43,9 @@
   (double  (* newscale (/ num scale))))
 
 (defn mandelgetcolor [real imag c count threshold]
-  (let [ adjustcount (* threshold count)] (cond (>= adjustcount 254) 254
+  (let [ adjustcount  (* threshold count)] (cond (>= adjustcount  255) 0
                                                 (> (+ (* real real) (* imag imag)) 4)
-                                                (min 254 adjustcount)
+                                                    (min 255 adjustcount)
                                         ;return number of iterations til escape
                                                 :else (let [sq (isq (list real imag))
                                                             rc (first c)
@@ -97,7 +102,7 @@
                            xysets)
 
 ;                  xysets (partition-all (int (+ 1 (/  (* scal scal) 4))) xypair)               
-;                  coorcolors (pmap scaleandcolorj (repeat lowx) (repeat lowy) (repeat scal) xypair
+;                  coorcolors (pmap scaleandcolorrj (repeat lowx) (repeat lowy) (repeat scal) xypair
  ;                  (repeat highx) (repeat highy) (repeat complex) (repeat threshold))
             grp (.getGraphics pan)
             ] 
@@ -166,12 +171,13 @@
          (doseq [pixels pixelnest] (let [xcoor (first (first pixels)) ycoor (second (first pixels))
                red (first (second pixels)) green (second (second pixels))
                blue (nth (second pixels) 2)]
-                      (.setColor grp (java.awt.Color. 0 (int (* 0.3 green)) blue))
-                      (try (.drawLine grp xcoor ycoor xcoor ycoor))
-                      ))
-        )))
-      )
-  )
+                     #_ (.setColor grp (java.awt.Color. 0 (int (* 0.3 green)) blue))
+                     (.setColor grp (nth colormaps/colormap (mod blue (count colormaps/colormap))))
+                     
+                     
+                     (try (.drawLine grp xcoor ycoor xcoor ycoor)))))))))
+
+(nth colormaps/colormap 3)
 
 
 ;(mandelgetcolor -0.7 0.3 '(-1.6 0.3) 0)
@@ -180,15 +186,23 @@
 (drawfractal  '(-2 2) '(-1.5 2.5) 500 '(0 0.9) 10)
 (time (drawfractal (zoom 6 '(-1.15 0.85)) (zoom 6 '(-1.2 0.8)) 1000 '(0 0.9) 7))
 (time (drawfractal  (zoom 4 '(-1.35 0))  (zoom 4 '(-1.8 -0.3)) 600 '(1 0) 10))
-(time (drawfractal  '(-2.5 2.5) '(-2.5 2.5) 1000 '(3 -3) 20))
 
+(time (drawfractal  '(-2.5 2.5) '(-2.5 2.5) 1000 '(0.25 0.75) 10))
+(time (drawfractal  '(-2 2) '(-1.8 2.2) 1000 '(0.1 -0.7) 5))
+(time (drawfractal  '(-2 2) '(-1.8 2.2) 1000 '(0.5 -0.7) 16))
 
 (time (drawfractal  '(-2.1 1.5) '(-1.7 1.7) 400 1))
 (time (drawfractal (zoom 450 '(-0.055 0.055)) (zoom 450 '(0.72992 0.84245)) 300 '(-1 0) 1))
-                                    ;seahorsevalley
-(time (drawfractal '(-0.9 -0.6) '(0.1 0.3) 1000 1))
 
 
+                                        ;seahorsevalley
+                                        ;deeper and deeper
+
+ (drawfractal '(-0.9 -0.6) '(0.1 0.3) 1000 1)
+ (drawfractal (zoom 50 '(-0.8 -0.65)) (zoom 50 '(0.15 0.35)) 1000 1)
+ (drawfractal (zoom 1250 '(-0.8 -0.65)) (zoom 1250 '(0.15 0.35)) 1000 1)
+ (drawfractal (zoom 1250 (zoom 1250 '(-0.8 -0.65))) (zoom 1250 (zoom 1250 '(0.15 0.35))) 500 1)
+ (* 1250 1250)
 
 
 
