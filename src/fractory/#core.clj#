@@ -205,7 +205,7 @@
 ;My favorite fractal so far.
 (drawfractal (zoom 100 '(-0.775 -0.725)) (zoom 100 '(0 0.05)) 1000 1)
 
-(drawfractal (zoom 100 '(-0.775 -0.725)) (zoom 100 '(0 0.05)) 1000 1)
+
 
 ; same region
 (drawfractal (zoom 200 '(-0.775 -0.7248)) (zoom 200 '(0 0.05005)) 800 1)
